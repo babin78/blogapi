@@ -19,10 +19,13 @@ var app = express();
 app.use(cors());
 
 // Normal express config defaults
-if(isProduction)
+/*if(!isProduction)
 {
   app.use(require('morgan')('dev'));
 }
+*/
+
+console.log(process.env.MONGODB_URI);
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
@@ -34,20 +37,35 @@ app.use(session({ secret: 'conduit', cookie: { maxAge: 60000 }, resave: false, s
 if (!isProduction) {
   app.use(errorhandler());
 }
-
+var conn;
 if(isProduction){
-  mongoose.connect(process.env.MONGODB_URI);
+  
+/* 
+ * Mongoose by default sets the auto_reconnect option to true.
+ * We recommend setting socket options at both the server and replica set level.
+ * We recommend a 30 second connection timeout because it allows for 
+ * plenty of time in most operating environments.
+ */
+var options = { server: { socketOptions: { keepAlive: 300000, connectTimeoutMS: 30000 } }, 
+                replset: { socketOptions: { keepAlive: 300000, connectTimeoutMS : 30000 } } };       
+ var connectionstr=process.env.MONGODB_URI || "mongodb://sa:system123#@ds161304.mlab.com:61304/conduitapp" 
+  conn=mongoose.connect(connectionstr,options).then(function(){
+                    console.log('connected to batabase');
+                  }).catch(function(error) {
+                console.log('error connecting to db: ' + error);
+                });;
+
 }
 else if(isTest) {
- mongoose.connect('mongodb://localhost/conduit-test');
+ conn=mongoose.connect('mongodb://localhost/conduit-test');
  mongoose.set('debug', true);
 }
  else {
-  mongoose.connect('mongodb://localhost/conduit');
+  conn=mongoose.connect('mongodb://localhost/conduit');
   mongoose.set('debug', true);
 }
 
-
+conn.on('error', console.error.bind(console, 'connection error:'));  
 require('./models/User');
 require('./models/Article');
 require('./models/Comment');
