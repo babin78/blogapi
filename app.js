@@ -11,6 +11,7 @@ var fs = require('fs'),
     mongoose = require('mongoose');
 process.env.NODE_ENV=process.env.NODE_ENV || 'development';
 var isProduction = process.env.NODE_ENV === 'production';
+console.log('production mode :'+isProduction);
 var isTest = process.env.NODE_ENV === 'test';
 // Create global app object
 var app = express();
