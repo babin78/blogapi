@@ -9,9 +9,9 @@ var fs = require('fs'),
     passport = require('passport'),
     errorhandler = require('errorhandler'),
     mongoose = require('mongoose');
-
+process.env.NODE_ENV=process.env.NODE_ENV || 'development';
 var isProduction = process.env.NODE_ENV === 'production';
-
+var isTest = process.env.NODE_ENV === 'test';
 // Create global app object
 var app = express();
 
@@ -33,13 +33,23 @@ if (!isProduction) {
 
 if(isProduction){
   mongoose.connect(process.env.MONGODB_URI);
-} else {
+}
+else if(isTest) {
+ mongoose.connect('mongodb://localhost/conduit-test');
+ mongoose.set('debug', true);
+}
+ else {
   mongoose.connect('mongodb://localhost/conduit');
   mongoose.set('debug', true);
 }
 
+
+require('./models/User');
+require('./models/Article');
+require('./models/Comment');
 app.use(require('./routes'));
 
+require('./config/passport');
 /// catch 404 and forward to error handler
 app.use(function(req, res, next) {
   var err = new Error('Not Found');
